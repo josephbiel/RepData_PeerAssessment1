@@ -7,30 +7,33 @@ output:
 
 
 ## Loading and preprocessing the data
-```{r echo=TRUE, results='hide', message=FALSE}
+```{r echo=TRUE, results='hide', message=FALSE, fig.path="figure/"}
 library(dplyr)
 data<-read.csv("activity.csv")
 data$Date<-as.Date(data$date, format="%Y-%m-%d")
+nDays<-length(unique(data$Date))
 ```
 
 ## What is mean total number of steps taken per day?
-```{r echo=TRUE}
+```{r echo=TRUE, fig.path="figure/"}
 stepsPerDay<-xtabs(steps ~ Date, data=data)
-hist(stepsPerDay)
+hist(stepsPerDay, main="Histogram Of Steps Per Day")
 mean(stepsPerDay)
 median(stepsPerDay)
 ```
 
 ## What is the average daily activity pattern?
-```{r echo=TRUE}
-data1<-data %>% group_by(interval) %>% summarize(totalSteps=sum(steps, na.rm=TRUE))
-nDays<-length(unique(data$Date))
-plot(data1$totalSteps/nDays, type="l", ylab="Average Steps Per Interval",
+```{r echo=TRUE, fig.path="figure/"}
+data1<-data %>% 
+    group_by(interval) %>% 
+    summarize(totalSteps=sum(steps, na.rm=TRUE))
+plot(data1$interval, data1$totalSteps/nDays, type="l", 
+     ylab="Average Steps Per Interval",
      xlab="5 Minute Interval")
 ```
 
 ## Imputing missing values
-```{r echo=TRUE}
+```{r echo=TRUE, fig.path="figure/"}
 sum(is.na(data$steps))
 data1<-data %>% 
     group_by(interval) %>% 
@@ -38,14 +41,14 @@ data1<-data %>%
 data2<-merge(data, data1)
 data2$steps<-ifelse(is.na(data2$steps), data2$meanSteps, data2$steps)
 data3<-data2 %>% 
-    group_by(interval) %>% 
+    group_by(Date) %>% 
     summarize(sumSteps=sum(steps, na.rm=TRUE))
-plot(data3$sumSteps/nDays, type="l", ylab="Average Steps Per Interval",
-     xlab="5 Minute Interval")
+hist(data3$sumSteps, type="l", main="Histogram Of Steps Per Day",
+     xlab="Steps Per Day")
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r echo=TRUE}
+```{r echo=TRUE, fig.path="figure/"}
 data$weekday<-weekdays(data$Date) %in% c("Saturday", "Sunday")
 data$dayType<-factor(data$weekday, labels = c("weekday", "weekend"))
 
@@ -56,7 +59,7 @@ dataWeekdays1<-dataWeekdays %>%
     group_by(interval) %>% 
     summarize(totalSteps=sum(steps, na.rm=TRUE))
 nWeekdays<-length(unique(dataWeekdays$Date))
-plot(dataWeekdays1$totalSteps/nWeekdays, type="l", ylab="Weekday Steps",
+plot(dataWeekdays1$interval, dataWeekdays1$totalSteps/nWeekdays, type="l", ylab="Weekday Steps",
      xlab="5 Minute Interval")
 
 dataWeekend<-data[which(data$dayType == "weekend"), ]
@@ -64,6 +67,6 @@ dataWeekend1<-dataWeekend %>%
     group_by(interval) %>% 
     summarize(totalSteps=sum(steps, na.rm=TRUE))
 nWeekend<-length(unique(dataWeekend$Date))
-plot(dataWeekend1$totalSteps/nWeekend, type="l", ylab="Weekend Steps",
+plot(dataWeekdays1$interval, dataWeekend1$totalSteps/nWeekend, type="l", ylab="Weekend Steps",
      xlab="5 Minute Interval")
 ```
